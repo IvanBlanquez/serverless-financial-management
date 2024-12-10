@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+#-------------
+# Bucket names
+#-------------
+  LandingS3BucketName:
+    Type: String
+    Description: The name of the S3 bucket
+    Default: !Sub '${AWS::AccountId}-${AWS::Region}-landing'
+  RawS3BucketName:
+    Type: String
+    Description: The name of the S3 bucket
+    Default: !Sub '${AWS::AccountId}-${AWS::Region}-raw'
+  TransactionsS3BucketName:
+    Type: String
+    Description: The name of the S3 bucket
+    Default: !Sub '${AWS::AccountId}-${AWS::Region}-transactions'
+
+  Mappings:
+
+  Resources:
+  #---------------
+  # Encryption Key
+  #---------------
+    EncryptionKey:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: 'KMS key for S3 encryption'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: 'sfm-kms-key-policy'
+  #-------------
+  # S3 Buckets
+  #-------------
+    LandingS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref LandingS3BucketName
+    RawS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref RawS3BucketName
+    TransactionsS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref TransactionsS3BucketName
+  #------------------------
+  # Glue DB and Transaction
+  #-------------------------
+    TransactionsDatabase:
+    Type: 'AWS::Glue::Database'
+    Properties:
+      DatabaseInput:
+        Name: 'transactions'
+        Description: 'Database for transactions'
+    TransactionsTable:
+    Type: 'AWS::Glue::Table'
+    Properties:
+      DatabaseName: !Ref TransactionsDatabase
+      TableInput:
+        Name: 'transactions'
+        Description: 'Table for transactions'
+        TableType: 'EXTERNAL_TABLE'
+        Parameters:
+          classification: 'json'
+          typeOfData: 'file'
+        StorageDescriptor:
+          Columns:
+            - Name: 'transaction_id'
+              Type: 'string'
+            - Name: 'transaction_date'
+              Type: 'string'
+            - Name: 'transaction_amount'
+              Type: 'double'
+            - Nam : 'transaction_description'
+              Type: 'string'
+            - Name: 'transaction_type'
+              Type: 'string'
+            - Name: 'bank_name'
+              Type: 'string'
+          Location: !Sub 's3://${TransactionsS3BucketName}/'
+          InputFormat: 'org.apache.hadoop.mapred.TextInputFormat'
+          OutputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+          SerdeInfo:
+            SerializationLibrary: 'org.apache.hive.hcatalog.data.JsonSerDe'  
+    
+
+

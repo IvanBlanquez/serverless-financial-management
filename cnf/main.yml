@@ -36,14 +36,46 @@ Parameters:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Ref LandingS3BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref EncryptionKey
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
     RawS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Ref RawS3BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref EncryptionKey
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
     TransactionsS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Ref TransactionsS3BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref EncryptionKey
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
   #------------------------
   # Glue DB and Transaction
   #-------------------------
@@ -54,35 +86,30 @@ Parameters:
         Name: 'transactions'
         Description: 'Database for transactions'
     TransactionsTable:
-    Type: 'AWS::Glue::Table'
-    Properties:
-      DatabaseName: !Ref TransactionsDatabase
-      TableInput:
-        Name: 'transactions'
-        Description: 'Table for transactions'
-        TableType: 'EXTERNAL_TABLE'
-        Parameters:
-          classification: 'json'
-          typeOfData: 'file'
-        StorageDescriptor:
-          Columns:
-            - Name: 'transaction_id'
-              Type: 'string'
-            - Name: 'transaction_date'
-              Type: 'string'
-            - Name: 'transaction_amount'
-              Type: 'double'
-            - Nam : 'transaction_description'
-              Type: 'string'
-            - Name: 'transaction_type'
-              Type: 'string'
-            - Name: 'bank_name'
-              Type: 'string'
-          Location: !Sub 's3://${TransactionsS3BucketName}/'
-          InputFormat: 'org.apache.hadoop.mapred.TextInputFormat'
-          OutputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
-          SerdeInfo:
-            SerializationLibrary: 'org.apache.hive.hcatalog.data.JsonSerDe'  
-    
-
-
+      Type: 'AWS::Glue::Table'
+      Properties:
+        DatabaseName: !Ref TransactionsDatabase
+        TableInput:
+          Name: 'transactions'
+          Description: 'Table for transactions'
+          TableType: 'EXTERNAL_TABLE'
+          Parameters:
+            classification: 'json'
+            typeOfData: 'file'
+          StorageDescriptor:
+            Columns:
+              - Name: 'transaction_date'
+                Type: 'string'
+              - Name: 'transaction_amount'
+                Type: 'double'
+              - Nam : 'transaction_description'
+                Type: 'string'
+              - Name: 'transaction_type'
+                Type: 'string'
+              - Name: 'bank_name'
+                Type: 'string'
+            Location: !Sub 's3://${TransactionsS3BucketName}/'
+            InputFormat: 'org.apache.hadoop.mapred.TextInputFormat'
+            OutputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+            SerdeInfo:
+              SerializationLibrary: 'org.apache.hive.hcatalog.data.JsonSerDe'  
